@@ -1,0 +1,1 @@
+Data science heavily relies on Python for its tools and simplicity. Libraries like Matplotlib and Seaborn are used for data visualization, while Pandas and NumPy handle data manipulation and analysis. Python's ecosystem continues to grow with innovations in the field.

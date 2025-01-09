@@ -1,0 +1,1 @@
+Web development with Python is made easy using frameworks like Django and Flask. These tools allow developers to build robust and scalable web applications. Python's syntax makes it a preferred choice for both backend development and APIs.

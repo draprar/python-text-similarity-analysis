@@ -1,0 +1,1 @@
+Machine learning and AI often rely on Python due to its simplicity and vast ecosystem. With frameworks like TensorFlow and PyTorch, Python enables rapid prototyping and deployment of machine learning models. It is also a favorite for research in artificial intelligence.
