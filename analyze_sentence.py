@@ -3,19 +3,11 @@ from transformers import pipeline
 # Load advanced NLP models
 sentiment_analyzer = pipeline("sentiment-analysis")
 
-# Function to analyze ambiguity and sentiment
+# Function to analyze ambiguity
 def analyze_sentence(sentence):
     analysis = {}
 
     try:
-        # Sentiment analysis
-        if not sentence.strip():
-            raise ValueError("Input sentence is empty.")
-
-        sentiment = sentiment_analyzer(sentence)[0]
-        analysis["sentiment"] = sentiment["label"]
-        analysis["sentiment_score"] = sentiment["score"]
-
         # Improved ambiguity detection using heuristics
         ambiguous_keywords = ["it", "this", "that", "these", "those", "something", "anything"]
         ambiguous_phrases = [

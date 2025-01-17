@@ -7,7 +7,4 @@ if __name__ == "__main__":
 
     # Generate the final report
     generate_report(results)
-
-    # Generate interactive graph and add to results.html
-    generate_graph_interactive(results)
     
