@@ -2,35 +2,29 @@ import os
 from sentence_transformers import SentenceTransformer, util
 import numpy as np
 
-output_dir = "documents"
-
 # Function to calculate similarity
-def calculate_similarity():
+def calculate_similarity(main_doc, helper_docs):
     # Load model
     model = SentenceTransformer("all-MiniLM-L6-v2")
 
-    # Read docs
-    file_paths = [os.path.join(output_dir, file) for file in os.listdir(output_dir)]
-
-    if not file_paths:
-        raise FileNotFoundError(f"No files found in the directory: {output_dir}")
-
+    # Read main document
     try:
-        with open(file_paths[0], "r", encoding="utf-8") as f:
+        with open(main_doc, "r", encoding="utf-8") as f:
             main_sentences = f.read().split(". ")
     except Exception as e:
-        raise IOError(f"Error reading main file {file_paths[0]}: {e}")
+        raise IOError(f"Error reading main document {main_doc}: {e}")
 
+    # Read helper documents
     helper_sentences = []
     helper_sources = []
-    for path in file_paths[1:]:
+    for path in helper_docs:
         try:
             with open(path, "r", encoding="utf-8") as f:
                 sentences = f.read().split(". ")
                 helper_sentences.extend(sentences)
                 helper_sources.extend([os.path.basename(path)] * len(sentences))
         except Exception as e:
-            print(f"Warning: Could not read file {path}: {e}")
+            print(f"Warning: Could not read helper file {path}: {e}")
 
     if not main_sentences or not helper_sentences:
         raise ValueError("Insufficient data to calculate similarities.")
