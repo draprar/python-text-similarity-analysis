@@ -5,14 +5,15 @@ from tkinter import filedialog, messagebox, scrolledtext
 from fpdf import FPDF
 from analyze_sentence import analyze_sentence
 from calculate_similarity import calculate_similarity
-from config import COVERED_THRESHOLD, PROBLEMATIC_THRESHOLD, review_log_file, update_review_log
-from generate_recommendation import generate_recommendation
+from config import COVERED_THRESHOLD, PROBLEMATIC_THRESHOLD, review_log_file
+from logs.review_log import update_review_log
+from dependency_graph import create_dependency_graph
 
-# Global variables for thresholds and file paths
-covered_threshold = COVERED_THRESHOLD
-problematic_threshold = PROBLEMATIC_THRESHOLD
+# Global variables
 main_document_path = None
 helper_documents_paths = []
+covered_threshold = COVERED_THRESHOLD
+problematic_threshold = PROBLEMATIC_THRESHOLD
 
 # Function to load the main document
 def load_main_document():
@@ -195,6 +196,18 @@ def generate_analysis_report(main_document_path=None, helper_documents_paths=Non
             if sentence not in reviewed_sentences:
                 update_review_log(sentence, action)
 
+        # Generate dependency graph
+        graph_image_path = "dependency_graph.png"
+        create_dependency_graph(results, sentence_labels, graph_image_path)
+
+        # Add a note to the plain text report
+        plain_text_report += "\nDependency Graph:\n"
+        plain_text_report += f"[Graph saved at {graph_image_path}]"
+
+        # Embed the graph in the HTML report
+        html_report += "<h2>Dependency Graph</h2>"
+        html_report += f"<img src='{graph_image_path}' alt='Dependency Graph'>"
+
         html_report += "</div>"
         html_report += "</body></html>"
 
@@ -218,6 +231,18 @@ def generate_analysis_report(main_document_path=None, helper_documents_paths=Non
         # Log the error with detailed information
         logging.error(f"Error generating report: {e}")
         messagebox.showerror("Error", f"Failed to generate report: {e}")
+
+def show_dependency_graph():
+    from PIL import Image, ImageTk
+
+    # Load and display the graph image
+    graph_window = tk.Toplevel(root)
+    graph_window.title("Dependency Graph")
+    img = Image.open("dependency_graph.png")
+    tk_img = ImageTk.PhotoImage(img)
+    label = tk.Label(graph_window, image=tk_img)
+    label.image = tk_img  # Keep a reference to avoid garbage collection
+    label.pack()
 
 # GUI setup
 root = tk.Tk()
@@ -254,5 +279,8 @@ button_frame.pack(padx=10, pady=10, fill="x")
 tk.Button(button_frame, text="Generate Report", command=lambda: generate_analysis_report(
     main_document_path, helper_documents_paths, report_text_widget
 )).pack(side="right", padx=5, pady=5)
+
+# Dependency Graph button
+tk.Button(button_frame, text="Show Dependency Graph", command=show_dependency_graph).pack(side="left", padx=5, pady=5)
 
 root.mainloop()
