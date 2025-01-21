@@ -1,5 +1,5 @@
 import os
-from config import review_log_file
+from helpers.config import review_log_file
 
 def initialize_log():
     if not os.path.exists(review_log_file):

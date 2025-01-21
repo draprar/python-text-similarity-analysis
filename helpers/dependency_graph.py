@@ -2,7 +2,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
-def create_dependency_graph(results, sentence_labels, output_image="dependency_graph.png"):
+def create_dependency_graph(results, sentence_labels, output_image="assets/dependency_graph.png"):
     """
     Generates a dependency graph from analysis results and saves it as an image.
 
