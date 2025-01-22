@@ -1,6 +1,6 @@
 import os
-from sentence_transformers import SentenceTransformer, util
 import numpy as np
+from sentence_transformers import SentenceTransformer, util
 
 # Function to calculate similarity
 def calculate_similarity(main_doc, helper_docs):
