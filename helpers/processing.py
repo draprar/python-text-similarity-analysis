@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 from helpers.analyze_sentence import analyze_sentence
 from helpers.calculate_similarity import calculate_similarity
-from helpers.config import review_log_file
+from helpers.config import REVIEW_LOG_FILE
 from helpers.dependency_graph import create_dependency_graph
 from logs.review_log import update_review_log
 
@@ -15,6 +15,7 @@ class ProcessLogic:
         self.problematic_threshold = 0.3
 
     def set_thresholds(self, covered, problematic):
+        """Set thresholds for sentence categorization."""
         self.covered_threshold = covered
         self.problematic_threshold = problematic
 
@@ -25,6 +26,7 @@ class ProcessLogic:
         return re.sub(clean, '', html)
 
     def generate_report(self, main_document_path, helper_documents_paths, text_widget=None):
+        """Generates and displays the report based on document analysis."""
         if not main_document_path:
             messagebox.showerror("Error", "Main document is not selected!")
             return
@@ -34,20 +36,15 @@ class ProcessLogic:
             return
 
         try:
-            # Prompt user to save the report
             file_path = self.prompt_save_report()
             if not file_path:
                 return
 
-            # Calculate similarity results
             results = calculate_similarity(main_document_path, helper_documents_paths)
-
-            # Generate report components
             summary_stats = self.calculate_summary_stats(results)
             reviewed_sentences = self.read_review_log()
             sentence_labels = self.generate_sentence_labels(results)
 
-            # Generate both reports
             html_report = self.generate_html_report(
                 results, summary_stats, reviewed_sentences, sentence_labels
             )
@@ -55,26 +52,23 @@ class ProcessLogic:
                 results, summary_stats, reviewed_sentences, sentence_labels
             )
 
-            # Save the report
             self.save_report(file_path, html_report)
 
-            # Display the plain text report in the GUI
             if text_widget:
                 self.display_report_in_gui(text_widget, plain_text_report)
 
-            # Render dependency graph in GUI
-            create_dependency_graph(results, sentence_labels, "dependency_graph_gui.png")
+            create_dependency_graph(results, sentence_labels, "assets/dependency_graph.png")
 
-            # Notify user of success
             messagebox.showinfo("Success", f"Report saved as {file_path}")
+            return plain_text_report
 
         except Exception as e:
-            logging.error(f"Error generating report: {e}")
-            messagebox.showerror("Error", f"Failed to generate report: {e}")
-
-        return plain_text_report
+            error_message = f"Failed to generate report: {e}"
+            logging.error(error_message, exc_info=True)
+            messagebox.showerror("Error", error_message)
 
     def prompt_save_report(self):
+        """Prompts the user to select a location for saving the report."""
         file_types = [("HTML Files", "*.html")]
         file_path = filedialog.asksaveasfilename(defaultextension=".html", filetypes=file_types)
         if not file_path:
@@ -82,6 +76,7 @@ class ProcessLogic:
         return file_path
 
     def calculate_summary_stats(self, results):
+        """Calculates summary statistics for the analysis results."""
         total_sentences = len(results)
         covered_count = sum(1 for _, max_sim, _ in results if max_sim >= self.covered_threshold)
         problematic_count = sum(1 for _, max_sim, _ in results if max_sim < self.covered_threshold)
@@ -94,34 +89,16 @@ class ProcessLogic:
         }
 
     def generate_plain_text_report(self, results, summary_stats, reviewed_sentences, sentence_labels):
-        """
-        Generates a formatted plain text report based on the analysis results,
-        summary statistics, reviewed sentences, and sentence labels.
-        """
+        """Generates a plain text version of the analysis report."""
         try:
-            # Debug input validation
             if not results:
-                logging.error("No results provided for plain text report generation.")
                 return "No results available to generate the report.\n"
-            if not summary_stats:
-                logging.error("No summary statistics provided for plain text report generation.")
-                return "No summary statistics available to generate the report.\n"
-            if not sentence_labels:
-                logging.error("No sentence labels provided for plain text report generation.")
-                return "No sentence labels available to generate the report.\n"
 
-            logging.debug(f"Generating report with {len(results)} results.")
-            logging.debug(f"Summary statistics: {summary_stats}")
-            logging.debug(f"Number of reviewed sentences: {len(reviewed_sentences)}")
-            logging.debug(f"Number of sentence labels: {len(sentence_labels)}")
-
-            # Generate report
             plain_text_report = (
                 "=========================\n"
                 "Document Analysis Report\n"
                 "=========================\n\n"
             )
-
             plain_text_report += (
                 "Summary Statistics\n"
                 "-------------------\n"
@@ -134,11 +111,9 @@ class ProcessLogic:
                 f"({(summary_stats['problematic'] / summary_stats['total']) * 100:.2f}%)\n\n"
             )
 
-            # Add sentences
             plain_text_report += "Sentence-by-Sentence Analysis\n"
             plain_text_report += "-----------------------------\n"
             for sentence, max_sim, best_matches in results:
-                # Validate and log each sentence
                 if sentence is None or max_sim is None:
                     logging.warning(f"Invalid result entry: {sentence}, {max_sim}, {best_matches}")
                     continue
@@ -155,7 +130,6 @@ class ProcessLogic:
                     f"\n{label_id}: {label} ({max_sim:.2f}) [{reviewed_status}]\n"
                     f"  Text: {sentence}\n"
                 )
-
                 if best_matches:
                     plain_text_report += "  Best Matches:\n"
                     for match_sentence, source, sim in best_matches:
@@ -163,23 +137,37 @@ class ProcessLogic:
                             f"    - ({sim:.2f}) {match_sentence} [Source: {source}]\n"
                         )
 
+                # Analyze the sentence and update review log
+                analysis = analyze_sentence(sentence)
+                ambiguity = analysis.get("ambiguity", "N/A")
+                plain_text_report += f"  Ambiguity: {ambiguity}\n"
+                action = "Merge" if label == "Covered" else "Remove" if label == "Problematic" else "Review"
+                if sentence not in reviewed_sentences:
+                    update_review_log(sentence, action)
+
             return plain_text_report
 
         except Exception as e:
-            logging.error(f"Error in generate_plain_text_report: {e}")
+            logging.error(f"Error generating plain text report: {e}")
             return "An error occurred while generating the plain text report.\n"
 
     def read_review_log(self):
+        """Reads the review log file to get reviewed sentences."""
         reviewed_sentences = set()
-        with open(review_log_file, "r", encoding="utf-8") as log:
-            for line in log.readlines()[1:]:
-                reviewed_sentences.add(line.split(" - ")[0].strip())
+        try:
+            with open(REVIEW_LOG_FILE, "r", encoding="utf-8") as log:
+                for line in log.readlines()[1:]:
+                    reviewed_sentences.add(line.split(" - ")[0].strip())
+        except FileNotFoundError:
+            logging.warning(f"Review log file not found: {REVIEW_LOG_FILE}")
         return reviewed_sentences
 
     def generate_sentence_labels(self, results):
+        """Generates unique labels for each analyzed sentence."""
         return {result[0]: f"S{i + 1}" for i, result in enumerate(results)}
 
     def generate_html_report(self, results, summary_stats, reviewed_sentences, sentence_labels):
+        """Generates an HTML version of the analysis report."""
         html_report = "<html><head>"
         html_report += "<style>.collapsible {cursor: pointer; padding: 10px; border: 1px solid #ccc;}</style>"
         html_report += "<script>"
@@ -238,14 +226,15 @@ class ProcessLogic:
         return html_report
 
     def save_report(self, file_path, html_report):
-        if file_path.endswith(".html"):
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write(html_report)
-        else:
-            logging.error("Unsupported file format for saving report.")
+        """Saves the HTML report to the specified file path."""
+        try:
+            with open(file_path, "w", encoding="utf-8") as file:
+                file.write(html_report)
+        except Exception as e:
+            logging.error(f"Error saving report: {e}")
 
     def display_report_in_gui(self, text_widget, plain_text_report):
-        logging.debug(f"Displaying plain text report: {plain_text_report[:500]}")  # Debugging output
+        """Displays the plain text report in the provided GUI text widget."""
         if text_widget:
             text_widget.delete("1.0", tk.END)
             text_widget.insert(tk.END, plain_text_report)

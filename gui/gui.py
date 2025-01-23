@@ -1,34 +1,36 @@
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
+from ttkbootstrap.dialogs import Messagebox
+from tkinter.scrolledtext import ScrolledText
+from tkinter.filedialog import askopenfilename, askopenfilenames
+from PIL import Image, ImageTk
 import re
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox, scrolledtext
-from fpdf import FPDF
 
 
 class AppGUI:
     def __init__(self, root, process_logic):
         """Initialize the main application window."""
-        self.covered_threshold_entry = None
-        self.report_text_widget = None
-        self.problematic_threshold_entry = None
         self.root = root
-        self.root.title("Document Dependency Mapper")
         self.process_logic = process_logic
-
         self.main_document_path = None
         self.helper_documents_paths = []
+
+        self.covered_threshold_entry = None
+        self.problematic_threshold_entry = None
+        self.report_text_widget = None
 
         self.create_widgets()
 
     def create_widgets(self):
         """Create and layout the widgets for the application."""
-        # Document Loading
+        # Document Loading Section
         file_frame = ttk.LabelFrame(self.root, text="Load Documents", padding=(10, 10))
         file_frame.pack(padx=10, pady=10, fill="x")
 
-        ttk.Button(file_frame, text="Load Main Document", command=self.load_main_document).pack(side="left", padx=5)
-        ttk.Button(file_frame, text="Load Helper Documents", command=self.load_helper_documents).pack(side="left", padx=5)
+        ttk.Button(file_frame, text="Load Main Document", command=self.load_main_document).pack(side=LEFT, padx=5)
+        ttk.Button(file_frame, text="Load Helper Documents", command=self.load_helper_documents).pack(side=LEFT, padx=5)
 
-        # Threshold Inputs
+        # Threshold Inputs Section
         threshold_frame = ttk.LabelFrame(self.root, text="Set Thresholds", padding=(10, 10))
         threshold_frame.pack(padx=10, pady=10, fill="x")
 
@@ -42,112 +44,78 @@ class AppGUI:
         self.problematic_threshold_entry.insert(0, "0.3")  # Default value
         self.problematic_threshold_entry.grid(row=1, column=1, padx=5, pady=5)
 
-        ttk.Button(threshold_frame, text="Set Thresholds", command=self.set_thresholds).grid(row=2, column=0, columnspan=2, pady=10)
+        ttk.Button(threshold_frame, text="Set Thresholds", command=self.set_thresholds).grid(
+            row=2, column=0, columnspan=2, pady=10
+        )
 
-        # Report Output
+        # Report Output Section
         report_frame = ttk.LabelFrame(self.root, text="Analysis Results", padding=(10, 10))
-        report_frame.pack(padx=10, pady=10, fill="both", expand=True)
+        report_frame.pack(padx=10, pady=10, fill=BOTH, expand=True)
 
-        self.report_text_widget = scrolledtext.ScrolledText(report_frame, wrap=tk.WORD, width=100, height=30)
-        self.report_text_widget.pack(padx=10, pady=10, fill="both", expand=True)
+        self.report_text_widget = ScrolledText(report_frame, wrap="word", width=100, height=30)
+        self.report_text_widget.pack(padx=10, pady=10, fill=BOTH, expand=True)
 
-        # Action Buttons
+        # Action Buttons Section
         button_frame = ttk.Frame(self.root)
         button_frame.pack(padx=10, pady=10, fill="x")
 
-        ttk.Button(button_frame, text="Generate Report", command=self.generate_report).pack(side="right", padx=5)
-        ttk.Button(button_frame, text="Quit", command=self.root.quit).pack(side="left", padx=5)
-        tk.Button(button_frame, text="Show Dependency Graph", command=self.show_dependency_graph).pack(side="left", padx=5,
-                                                                                                  pady=5)
+        ttk.Button(button_frame, text="Generate Report", command=self.generate_report).pack(side=RIGHT, padx=5)
+        ttk.Button(button_frame, text="Quit", command=self.root.quit).pack(side=LEFT, padx=5)
+        ttk.Button(button_frame, text="Show Dependency Graph", command=self.show_dependency_graph).pack(side=LEFT, padx=5)
 
     def load_main_document(self):
-        self.main_document_path = filedialog.askopenfilename(filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")])
+        """Load the main document."""
+        self.main_document_path = askopenfilename(filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")])
         if self.main_document_path:
-            messagebox.showinfo("Main Document Loaded", f"Loaded: {self.main_document_path}")
+            Messagebox.show_info("Main Document Loaded", f"Loaded: {self.main_document_path}")
         else:
-            messagebox.showerror("Error", "Main document not selected!")
+            Messagebox.show_error("Error", "Main document not selected!")
 
     def load_helper_documents(self):
-        self.helper_documents_paths = filedialog.askopenfilenames(filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")])
+        """Load helper documents."""
+        self.helper_documents_paths = askopenfilenames(filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")])
         if self.helper_documents_paths:
-            messagebox.showinfo("Helper Documents Loaded", f"Loaded {len(self.helper_documents_paths)} documents.")
+            Messagebox.show_info("Helper Documents Loaded", f"Loaded {len(self.helper_documents_paths)} documents.")
         else:
-            messagebox.showerror("Error", "No helper documents selected!")
+            Messagebox.show_error("Error", "No helper documents selected!")
 
     def set_thresholds(self):
+        """Set thresholds for analysis."""
         try:
             covered = float(self.covered_threshold_entry.get())
             problematic = float(self.problematic_threshold_entry.get())
             self.process_logic.set_thresholds(covered, problematic)
-            messagebox.showinfo("Thresholds Set", "Thresholds updated successfully!")
+            Messagebox.show_info("Thresholds Set", "Thresholds updated successfully!")
         except ValueError:
-            messagebox.showerror("Error", "Invalid thresholds! Please enter numbers.")
-
-    # Function to save the report as an HTML or PDF file
-    @staticmethod
-    def save_report(stats_text, detailed_analysis):
-        file_path = filedialog.asksaveasfilename(
-            title="Save Report",
-            defaultextension=".html",
-            filetypes=[("HTML Files", "*.html"), ("PDF Files", "*.pdf")]
-        )
-        if not file_path:
-            return
-
-        try:
-            if file_path.endswith(".html"):
-                with open(file_path, "w") as f:
-                    f.write("<html><body><pre>")
-                    f.write(stats_text)
-                    f.write(detailed_analysis)
-                    f.write("</pre></body></html>")
-            elif file_path.endswith(".pdf"):
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_auto_page_break(auto=True, margin=15)
-                pdf.set_font("Arial", size=12)
-
-                for line in stats_text.split("\n"):
-                    pdf.multi_cell(0, 10, line)
-                for line in detailed_analysis.split("\n"):
-                    pdf.multi_cell(0, 10, line)
-                pdf.output(file_path)
-
-            messagebox.showinfo("Success", f"Report saved successfully as {file_path}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to save report: {e}")
-
-    # Function to generate analysis report
-    @staticmethod
-    def strip_html_tags(html):
-        """Helper function to remove HTML tags from a string."""
-        clean = re.compile('<.*?>')
-        return re.sub(clean, '', html)
+            Messagebox.show_error("Error", "Invalid thresholds! Please enter numbers.")
 
     def generate_report(self):
+        """Generate the analysis report."""
         if not self.main_document_path or not self.helper_documents_paths:
-            messagebox.showerror("Error", "Please load the main and helper documents first.")
+            Messagebox.show_error("Error", "Please load the main and helper documents first.")
             return
 
         try:
             result = self.process_logic.generate_report(
                 self.main_document_path,
-                self.helper_documents_paths
+                self.helper_documents_paths,
+                self.report_text_widget
             )
-            self.report_text_widget.delete("1.0", tk.END)
-            self.report_text_widget.insert(tk.END, result)
-            messagebox.showinfo("Success", "Report generated successfully!")
+            self.report_text_widget.delete("1.0", "end")
+            self.report_text_widget.insert("end", result)
+            Messagebox.show_info("Success", "Report generated successfully!")
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to generate report: {e}")
+            Messagebox.show_error("Error", f"Failed to generate report: {e}")
 
     def show_dependency_graph(self):
-        from PIL import Image, ImageTk
-
-        # Load and display the graph image
-        graph_window = tk.Toplevel(self.root)
-        graph_window.title("Dependency Graph")
-        img = Image.open("assets/dependency_graph.png")
-        tk_img = ImageTk.PhotoImage(img)
-        label = tk.Label(graph_window, image=tk_img)
-        label.image = tk_img  # Keep a reference to avoid garbage collection
-        label.pack()
+        """Show the dependency graph."""
+        try:
+            graph_window = tk.Toplevel(self.root)
+            graph_window.title("Dependency Graph")
+            img = Image.open("dependency_graph_gui.png")
+            tk_img = ImageTk.PhotoImage(img)
+            label = ttk.Label(graph_window, image=tk_img)
+            label.image = tk_img
+            label.pack()
+        except Exception as e:
+            Messagebox.show_error("Error", f"Failed to display dependency graph: {e}")

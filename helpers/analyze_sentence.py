@@ -3,12 +3,20 @@ from transformers import pipeline
 # Load advanced NLP models
 sentiment_analyzer = pipeline("sentiment-analysis")
 
-# Function to analyze ambiguity
 def analyze_sentence(sentence):
+    """
+    Analyzes the ambiguity of a given sentence.
+
+    Args:
+        sentence (str): The sentence to analyze.
+
+    Returns:
+        dict: Analysis results, including ambiguity level.
+    """
     analysis = {}
 
     try:
-        # Improved ambiguity detection using heuristics
+        # Define ambiguous keywords and phrases
         ambiguous_keywords = ["it", "this", "that", "these", "those", "something", "anything"]
         ambiguous_phrases = [
             "might be", "could be", "possibly", "perhaps", "seems like", "appears to be"
