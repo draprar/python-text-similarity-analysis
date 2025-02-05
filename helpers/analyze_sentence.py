@@ -1,4 +1,5 @@
 from transformers import pipeline
+import re
 
 # Load advanced NLP models
 sentiment_analyzer = pipeline("sentiment-analysis")
@@ -14,18 +15,16 @@ def analyze_sentence(sentence):
         dict: Analysis results, including ambiguity level.
     """
     analysis = {}
-
     try:
-        # Define ambiguous keywords and phrases
         ambiguous_keywords = ["it", "this", "that", "these", "those", "something", "anything"]
         ambiguous_phrases = [
             "might be", "could be", "possibly", "perhaps", "seems like", "appears to be"
         ]
         ambiguity_score = 0
 
-        # Check for ambiguous keywords
+        # Check for ambiguous keywords as whole words
         for keyword in ambiguous_keywords:
-            if keyword in sentence.lower():
+            if re.search(rf"\b{keyword}\b", sentence, re.IGNORECASE):
                 ambiguity_score += 1
 
         # Check for ambiguous phrases

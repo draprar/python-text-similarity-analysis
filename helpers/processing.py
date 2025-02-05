@@ -186,8 +186,8 @@ class ProcessLogic:
         html_report += "</div>"
 
         # Sentence Analysis Section
-        html_report += "<div class='collapsible' onclick='toggleVisibility(\"sentence_analysis\")'>Sentence-by-Sentence Analysis</div>"
-        html_report += "<div id='sentence_analysis' style='display:none;'>"
+        html_report += "<div class='collapsible' onclick='toggleVisibility(\"sentence_analysis.py\")'>Sentence-by-Sentence Analysis</div>"
+        html_report += "<div id='sentence_analysis.py' style='display:none;'>"
         for sentence, max_sim, best_matches in results:
             # Determine the category and color
             if max_sim >= self.covered_threshold:
