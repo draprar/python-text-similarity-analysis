@@ -1,8 +1,10 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+from helpers.config import DEPENDENCY_GRAPH_PATH
+import matplotlib
+matplotlib.use('Agg')
 
-
-def create_dependency_graph(results, sentence_labels, output_image="assets/dependency_graph.png"):
+def create_dependency_graph(results, sentence_labels, output_image=DEPENDENCY_GRAPH_PATH):
     """
     Generates a dependency graph from analysis results and saves it as an image.
 
@@ -14,7 +16,6 @@ def create_dependency_graph(results, sentence_labels, output_image="assets/depen
     Returns:
         str: Path to the saved graph image.
     """
-    # Initialize a directed graph
     G = nx.DiGraph()
 
     # Add nodes for sentences
@@ -27,24 +28,17 @@ def create_dependency_graph(results, sentence_labels, output_image="assets/depen
         source_label = sentence_labels.get(sentence, "Unknown")
         for match_sentence, doc, sim in best_matches:
             if sim > 0:  # Only add meaningful dependencies
-                G.add_edge(source_label, doc, weight=sim)
+                target_label = sentence_labels.get(match_sentence, doc)  # Use doc name if no label
+                G.add_edge(source_label, target_label, weight=sim)
 
     # Define node colors and edge labels
-    node_colors = [data.get("color", "lightgrey") for _, data in G.nodes(data=True)]
+    node_colors = ["lightblue" if data.get("type") == "sentence" else "lightgrey" for _, data in G.nodes(data=True)]
     edge_labels = {(u, v): f"{w:.2f}" for u, v, w in G.edges(data="weight")}
 
     # Draw the graph
-    pos = nx.spring_layout(G)  # Layout for the graph
     plt.figure(figsize=(12, 8))
-    nx.draw(
-        G,
-        pos,
-        with_labels=True,
-        node_size=1500,
-        node_color=node_colors,
-        font_size=10,
-        font_weight="bold",
-    )
+    pos = nx.spring_layout(G, seed=42)  # Consistent layout
+    nx.draw(G, pos, with_labels=True, node_size=1500, node_color=node_colors, font_size=10, font_weight="bold")
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
     plt.title("Dependency Graph")
     plt.savefig(output_image)
