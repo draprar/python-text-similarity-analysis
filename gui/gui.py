@@ -90,18 +90,48 @@ class AppGUI:
             return
 
         try:
+            file_path = self.process_logic.prompt_save_report()
+            if not file_path:
+                return
+
+            print("📌 Downloading data for report...")  # 🔥 DEBUG
             result, summary_stats, sentence_labels = self.process_logic.generate_data_for_report(
                 self.main_document_path,
                 self.helper_documents_paths
             )
-            report_text = self.process_logic.generate_plain_text_report(result, summary_stats, sentence_labels)
 
-            self.root.after(0, lambda: self.report_text_widget.delete("1.0", "end"))
-            self.root.after(0, lambda: self.report_text_widget.insert("end", report_text))
+            print("📌 Generating reports...")  # 🔥 DEBUG
+
+            # ✅ WE ADD CHART GENERATION
+            chart_path = self.process_logic.generate_pie_chart(summary_stats)
+            match_chart_path = self.process_logic.generate_match_distribution_chart(result)
+            dependency_graph = self.process_logic.generate_dependency_graph(result, sentence_labels)
+
+            # ✅ WE PASS chart_path TO THE REPORT HTML!
+            html_report = self.process_logic.generate_html_report(result, summary_stats, sentence_labels, chart_path, match_chart_path, dependency_graph)
+            plain_text_report = self.process_logic.generate_plain_text_report(result, summary_stats, sentence_labels)
+
+            print("📌 Saving report to file...")  # 🔥 DEBUG
+            self.process_logic.save_report(file_path, html_report)
+
+
+
+            print(f"📌 Text report:\n{plain_text_report}")  # 🔥 DEBUG
+
+            # 🚀 **WYŚWIETLAMY RAPORT W GUI**
+            try:
+                print("📌 GUI update...")  # 🔥 DEBUG
+                self.root.after(0, lambda: self.report_text_widget.delete("1.0", "end"))
+                self.root.after(100, lambda: self.report_text_widget.insert("end", plain_text_report))
+            except Exception as err:
+                print(f"❌ Update error: {err}")  # 🔥 DEBUG
+
+            # 🚀 **POKAZUJEMY SUKCES**
             self.root.after(0, lambda: Messagebox.show_info("Success", "Report generated successfully!"))
 
-        except Exception as e:
-            self.root.after(0, lambda: Messagebox.show_error("Error", f"Failed to generate report: {e}"))
+        except Exception as err:
+            print(f"❌ Report generation error: {err}")  # 🔥 DEBUG
+            self.root.after(0, lambda e=err: Messagebox.show_error("Error", f"Failed to generate report: {e}"))
 
     def set_thresholds(self):
         """Set user-defined thresholds for analysis."""
@@ -139,12 +169,3 @@ class AppGUI:
             label.pack()
         except Exception as e:
             self.root.after(0, lambda: Messagebox.show_error("Error", f"Failed to display dependency graph: {e}"))
-
-    @staticmethod
-    def calculate_migration_score(similarity_score):
-        if similarity_score >= 0.8:
-            return "Safe"
-        elif similarity_score >= 0.4:
-            return "Warning"
-        else:
-            return "Danger"
