@@ -15,9 +15,20 @@ def test_analyze_sentence(sentence, expected):
     result = analyze_sentence(sentence)
     assert result["ambiguity"] == expected, f"Failed for input: {sentence}"
 
-def test_analyze_sentence_no_crash():
-    """Ensure function does not crash on unexpected input."""
+@pytest.mark.parametrize("sentence, expected", [
+    ("It is believed that this might be approximately correct.", "High"),  # 2 frazy + 1 słowo
+    ("It appears to be somewhat unclear.", "High"),  # 2 frazy
+])
+def test_multiple_ambiguities(sentence, expected):
+    """Ensure function detects multiple ambiguous terms properly."""
+    result = analyze_sentence(sentence)
+    assert result["ambiguity"] == expected
+
+@pytest.mark.parametrize("sentence", [None, 123, 3.14, [], {}])
+def test_unexpected_input_types(sentence):
+    """Ensure function handles unexpected input types gracefully."""
     try:
-        analyze_sentence(None)  # Passing None as input
+        result = analyze_sentence(str(sentence))
+        assert isinstance(result, dict) and "ambiguity" in result
     except Exception:
-        pytest.fail("analyze_sentence() crashed on None input.")
+        pytest.fail(f"analyze_sentence() crashed on input: {sentence}")

@@ -22,9 +22,18 @@ def test_main_function(monkeypatch):
     """Test the main function to ensure it initializes the app."""
 
     def mock_mainloop(self):
-        pass  # Prevents the actual GUI from running
+        pass  # Zapobiega uruchomieniu GUI
 
-    monkeypatch.setattr(tk.Tk, "mainloop", mock_mainloop)  # Mock the GUI loop
+    monkeypatch.setattr(tk.Tk, "mainloop", mock_mainloop)
 
-    main()  # Run the main function to see if it executes properly
+    root = tk.Tk()
+    monkeypatch.setattr(tk, "Tk", lambda: root)  # Podstawia mockowane okno
+    main()
 
+    assert root.title() == "Document Dependency Mapper"
+
+def test_gui_components(app):
+    """Ensure all key GUI components are initialized."""
+    assert hasattr(app, "covered_threshold_entry"), "Missing threshold entry field"
+    assert hasattr(app, "problematic_threshold_entry"), "Missing problematic threshold field"
+    assert hasattr(app, "report_text_widget"), "Missing report text widget"

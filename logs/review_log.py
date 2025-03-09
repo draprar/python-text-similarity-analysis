@@ -21,11 +21,13 @@ def update_review_log(sentence: str, action: str):
     Args:
         sentence (str): The sentence being reviewed.
         action (str): The action taken on the sentence (e.g., "Accepted", "Rejected").
-
-    Logs are appended to the REVIEW_LOG_FILE for tracking user interactions.
     """
+    if not sentence.strip() or not action.strip():
+        return  # Don't save empty values
+
     try:
         with open(REVIEW_LOG_FILE, "a", encoding="utf-8") as log:
             log.write(f"{sentence} - {action}\n")  # Append to log file
     except Exception as e:
         print(f"Error updating review log: {e}")  # Handle file I/O errors
+
