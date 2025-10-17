@@ -24,7 +24,6 @@ def _safe_hex_color(run) -> str:
         pass
     return "#000000"
 
-
 def extract_docx_blocks(path: Path) -> List[Dict[str, Any]]:
     """
     Returns a list of blocks in the order they appear in the document.

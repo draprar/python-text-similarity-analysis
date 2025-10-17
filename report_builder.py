@@ -256,7 +256,7 @@ def _render_image(f, b, cls):
     f.write("</div>")
 
 # -------------------------
-# Main renderer
+# Main render
 # -------------------------
 def generate_html_report(block_diffs: List[Dict[str, Any]], output_path: str = "report.html") -> None:
     # 1) basic statistics and scoring

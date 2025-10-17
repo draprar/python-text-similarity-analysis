@@ -23,7 +23,6 @@ class ExitCode(IntEnum):
     HTML_ERROR = 5
     JSON_ERROR = 6
 
-
 EXTRACTOR_MAP = {
     ".docx": DocxExtractor,
     ".doc": DocxExtractor,
